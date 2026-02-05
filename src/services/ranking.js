@@ -20,13 +20,19 @@ class SearchEngine {
 
         if (q.includes('sasta') || q.includes('cheap') || q.includes('under') || q.includes('low price')) {
             intent.sort = 'priceAsc';
-            intent.cleanQuery = q.replace(/(sasta|cheap|low price)/g, '').trim();
+            intent.cleanQuery = q.replace(/(sasta|cheap|low price|under)/g, '').trim();
         } else if (q.includes('premium') || q.includes('expensive')) {
             intent.sort = 'priceDesc';
         }
 
-        if (q.includes('best') || q.includes('top') || q.includes('latest')) {
-            intent.sort = 'ratingDesc';
+        if (q.includes('latest') || q.includes('new') || q.includes('recent')) {
+            intent.sort = 'dateDesc';
+            intent.cleanQuery = q.replace(/(latest|new|recent)/g, '').trim();
+        }
+
+        if (q.includes('best') || q.includes('top') || q.includes('popular') || q.includes('trending')) {
+            intent.sort = 'popularityDesc';
+            intent.cleanQuery = q.replace(/(best|top|popular|trending)/g, '').trim();
         }
 
         return intent;
@@ -44,10 +50,15 @@ class SearchEngine {
             ignoreLocation: true
         });
 
-        let results = fuse.search(intent.cleanQuery).map(res => ({
-            ...res.item,
-            score: res.score
-        }));
+        let results = [];
+        if (!intent.cleanQuery) {
+            results = products.map(p => ({ ...p, score: 0 }));
+        } else {
+            results = fuse.search(intent.cleanQuery).map(res => ({
+                ...res.item,
+                score: res.score
+            }));
+        }
 
         if (results.length === 0) return [];
 
@@ -55,20 +66,22 @@ class SearchEngine {
             results.sort((a, b) => a.price - b.price);
         } else if (intent.sort === 'priceDesc') {
             results.sort((a, b) => b.price - a.price);
-        } else if (intent.sort === 'ratingDesc') {
-            results.sort((a, b) => b.rating - a.rating);
+        } else if (intent.sort === 'dateDesc') {
+            results.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
+        } else if (intent.sort === 'popularityDesc') {
+            results.sort((a, b) => {
+                const popularityA = (a.salesCount || 0) * 0.7 + (a.rating || 0) * 1000;
+                const popularityB = (b.salesCount || 0) * 0.7 + (b.rating || 0) * 1000;
+                return popularityB - popularityA;
+            });
         } else {
             results.sort((a, b) => {
                 const scoreA = (1 - a.score) * 100;
                 const scoreB = (1 - b.score) * 100;
+                const boostA = Math.log(a.salesCount || 1);
+                const boostB = Math.log(b.salesCount || 1);
 
-                const ratingA = (a.rating || 0) * 10;
-                const ratingB = (b.rating || 0) * 10;
-
-                const totalA = (scoreA * 0.7) + (ratingA * 0.3);
-                const totalB = (scoreB * 0.7) + (ratingB * 0.3);
-
-                return totalB - totalA;
+                return (scoreB + boostB) - (scoreA + boostA);
             });
         }
 

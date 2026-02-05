@@ -36,7 +36,7 @@ async function scrapeProducts(baseUrl = 'https://webscraper.io/test-sites/e-comm
 
             $('.thumbnail').each((i, el) => {
                 const title = $(el).find('.title').attr('title') || $(el).find('.title').text().trim();
-                const priceText = $(el).find('.price').text(); // e.g., $110.00
+                const priceText = $(el).find('.price').text();
                 const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
                 const description = $(el).find('.description').text().trim();
                 const rating = parseInt($(el).find('.ratings p[data-rating]').attr('data-rating')) || 0;
@@ -80,6 +80,8 @@ async function scrapeProducts(baseUrl = 'https://webscraper.io/test-sites/e-comm
                 title: `${base.title} ${variantStorage} ${variantColor}`,
                 price: newPrice,
                 stock: Math.floor(Math.random() * 50),
+                salesCount: Math.floor(Math.random() * 5000),
+                releaseDate: new Date(Date.now() - Math.floor(Math.random() * 1000 * 60 * 60 * 24 * 700)).toISOString(),
                 isVariant: true
             });
         }

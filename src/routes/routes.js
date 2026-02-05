@@ -44,9 +44,9 @@ productRouter.get('/search', async (req, res) => {
 })
 
 productRouter.put('/update/:id', async (req, res) => {
-    const pid = req.params.id
+    const pid = parseInt(req.params.id)
     try {
-        const updated = productModel.updateMetadata(pid, req.body)
+        const updated = productModel.update(pid, req.body)
         res.status(200).send({ "msg": `Product with ID: ${pid} has been updated`, "product": updated })
     }
     catch (err) {

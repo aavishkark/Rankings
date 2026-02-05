@@ -11,13 +11,22 @@ const productModel = {
         return product
     },
 
-    updateMetadata(productId, metadata) {
-        const product = this.productsMap.get(productId)
+    update(productId, updates) {
+        const product = this.productsMap.get(productId);
         if (!product) {
-            throw new Error(`Product with ID ${productId} not found.`)
+            throw new Error(`Product with ID ${productId} not found.`);
         }
-        product.Metadata = { ...product.Metadata, ...metadata }
-        return product
+
+        const { Metadata, ...rootUpdates } = updates;
+
+        delete rootUpdates.productId;
+        Object.assign(product, rootUpdates);
+
+        if (Metadata) {
+            product.Metadata = { ...product.Metadata, ...Metadata };
+        }
+
+        return product;
     },
 
     find(query = {}) {

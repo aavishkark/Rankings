@@ -1,11 +1,14 @@
 const { scrapeProducts } = require('./src/utils/scrapper');
 const { productModel } = require('./src/Model/product.model');
-const express = require('express')
-const app = express()
-const cors = require('cors')
+const { productRouter } = require('./src/routes/routes.js');
+
+const express = require('express');
+const app = express();
+const cors = require('cors');
 app.use(cors())
 require("dotenv").config()
 app.use(express.json())
+app.use('/api', productRouter);
 app.get('/', (req, res) => {
     res.send({ "msg": "This is the home page for testing the server" })
 })
